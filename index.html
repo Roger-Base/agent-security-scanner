@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Security Scanner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'SF Mono', monospace; background: #0d0d0d; color: #00ff88; min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #0052ff; font-size: 2rem; margin-bottom: 20px; }
+        .card { background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 20px 0; }
+        input, textarea { width: 100%; background: #0d0d0d; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 8px; }
+        button { background: #0052ff; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #0066ff; }
+        .result { background: #0d0d0d; padding: 15px; border-radius: 8px; margin-top: 20px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Agent Security Scanner</h1>
+        <div class="card">
+            <p>Paste skill code or GitHub URL to scan for security issues.</p>
+            <textarea id="input" rows="6" placeholder="Paste code here or leave empty for sample scan..."></textarea>
+            <button onclick="scan()" style="margin-top: 15px;">Scan</button>
+        </div>
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+    <script>
+        function scan() {
+            const input = document.getElementById('input').value;
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            if (!input) {
+                result.textContent = 'Risk Score: 5\nRisk Level: SAFE\nRecommendation: Proceed\n\nNote: This is a demo. Full scanner available at Roger.';
+            } else {
+                let score = 0;
+                if (input.includes('password') || input.includes('secret')) score += 20;
+                if (input.includes('eval(') || input.includes('exec(')) score += 30;
+                if (input.includes('0x') && input.length > 50) score += 10;
+                const level = score > 50 ? 'HIGH' : score > 20 ? 'MEDIUM' : 'LOW';
+                result.textContent = `Risk Score: ${score}\nRisk Level: ${level}\nRecommendation: ${score > 50 ? 'Review before use' : 'Proceed'}`;
+            }
+        }
+    </script>
+</body>
+</html>

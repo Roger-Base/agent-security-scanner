@@ -3,44 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Security Scanner</title>
+    <title>🔒 Agent Security Scanner</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'SF Mono', monospace; background: #0d0d0d; color: #00ff88; min-height: 100vh; padding: 20px; }
+        body { font-family: 'SF Mono', 'Monaco', monospace; background: #0d0d0d; color: #00ff88; min-height: 100vh; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; }
-        h1 { color: #0052ff; font-size: 2rem; margin-bottom: 20px; }
-        .card { background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 20px 0; }
-        input, textarea { width: 100%; background: #0d0d0d; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 8px; }
-        button { background: #0052ff; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+        h1 { color: #0052ff; font-size: 2.5rem; margin-bottom: 10px; }
+        .tagline { color: #666; margin-bottom: 30px; }
+        .card { background: #1a1a2e; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+        .card h2 { color: #fff; font-size: 1.2rem; margin-bottom: 15px; }
+        textarea { width: 100%; background: #0d0d0d; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; font-family: inherit; min-height: 150px; }
+        button { background: #0052ff; color: #fff; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-right: 10px; }
         button:hover { background: #0066ff; }
-        .result { background: #0d0d0d; padding: 15px; border-radius: 8px; margin-top: 20px; white-space: pre-wrap; }
+        .result { background: #0d0d0d; padding: 20px; border-radius: 8px; margin-top: 20px; white-space: pre-wrap; display: none; }
+        .result.show { display: block; }
+        .score { font-size: 3rem; font-weight: bold; }
+        .score.safe { color: #00ff88; }
+        .score.medium { color: #ffaa00; }
+        .score.high { color: #ff4444; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; margin-right: 5px; }
+        .badge.safe { background: #00ff8822; color: #00ff88; }
+        .badge.medium { background: #ffaa0022; color: #ffaa00; }
+        .badge.high { background: #ff444422; color: #ff4444; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; color: #666; font-size: 0.9rem; }
+        a { color: #0052ff; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔒 Agent Security Scanner</h1>
+        <p class="tagline">Scan skills and code for security issues before you install.</p>
+        
         <div class="card">
-            <p>Paste skill code or GitHub URL to scan for security issues.</p>
-            <textarea id="input" rows="6" placeholder="Paste code here or leave empty for sample scan..."></textarea>
-            <button onclick="scan()" style="margin-top: 15px;">Scan</button>
+            <h2>Paste code to scan</h2>
+            <textarea id="input" placeholder="Paste skill code, script, or any code here..."></textarea>
+            <div style="margin-top: 15px;">
+                <button onclick="scan()">Scan Code</button>
+                <button onclick="clearInput()" style="background: #333;">Clear</button>
+            </div>
         </div>
-        <div id="result" class="result" style="display:none;"></div>
+        
+        <div id="result" class="result">
+            <div class="score" id="score">-</div>
+            <div id="badges" style="margin: 15px 0;"></div>
+            <div id="details"></div>
+        </div>
+        
+        <div class="footer">
+            <p>Built by <a href="https://x.com/roger_base_eth">@roger_base_eth</a> | 
+            <a href="https://github.com/forge-builder/agent-security-scanner-simple">Source</a></p>
+        </div>
     </div>
     <script>
         function scan() {
             const input = document.getElementById('input').value;
-            const result = document.getElementById('result');
-            result.style.display = 'block';
-            if (!input) {
-                result.textContent = 'Risk Score: 5\nRisk Level: SAFE\nRecommendation: Proceed\n\nNote: This is a demo. Full scanner available at Roger.';
-            } else {
-                let score = 0;
-                if (input.includes('password') || input.includes('secret')) score += 20;
-                if (input.includes('eval(') || input.includes('exec(')) score += 30;
-                if (input.includes('0x') && input.length > 50) score += 10;
-                const level = score > 50 ? 'HIGH' : score > 20 ? 'MEDIUM' : 'LOW';
-                result.textContent = `Risk Score: ${score}\nRisk Level: ${level}\nRecommendation: ${score > 50 ? 'Review before use' : 'Proceed'}`;
+            const resultDiv = document.getElementById('result');
+            const scoreDiv = document.getElementById('score');
+            const badgesDiv = document.getElementById('badges');
+            const detailsDiv = document.getElementById('details');
+            
+            resultDiv.classList.add('show');
+            
+            if (!input.trim()) {
+                scoreDiv.textContent = '5';
+                scoreDiv.className = 'score safe';
+                badgesDiv.innerHTML = '<span class="badge safe">SAFE</span>';
+                detailsDiv.innerHTML = 'No input provided. Sample: Risk Score 5 = SAFE.\n\nRecommendation: Proceed';
+                return;
             }
+            
+            let score = 0;
+            let findings = [];
+            
+            // Secret patterns
+            if (/ghp_[A-Za-z0-9]{20,}/.test(input)) { score += 40; findings.push('GitHub token found'); }
+            if (/github_pat_[A-Za-z0-9_]{20,}/.test(input)) { score += 40; findings.push('GitHub PAT found'); }
+            if (/sk-[A-Za-z0-9]{20,}/.test(input)) { score += 35; findings.push('OpenAI key found'); }
+            if (/xox[baprs]-[A-Za-z0-9-]+/.test(input)) { score += 35; findings.push('X/Twitter token found'); }
+            
+            // Dangerous patterns
+            if (/eval\s*\(/.test(input)) { score += 25; findings.push('eval() usage - code injection risk'); }
+            if (/exec\s*\(/.test(input)) { score += 25; findings.push('exec() usage - command injection risk'); }
+            if (/child_process/.test(input)) { score += 20; findings.push('child_process - verify source'); }
+            
+            // Wallet patterns
+            if (/0x[a-fA-F0-9]{40}/.test(input)) { score += 10; findings.push('Hardcoded wallet address'); }
+            
+            // Policy issues
+            if (/password\s*=|token\s*=|secret\s*=/.test(input)) { score += 15; findings.push('Potential credential exposure'); }
+            
+            // Determine level
+            let level = 'SAFE';
+            let rec = 'Proceed';
+            if (score >= 50) { level = 'HIGH'; rec = 'Do not use without review'; }
+            else if (score >= 25) { level = 'MEDIUM'; rec = 'Use with caution'; }
+            
+            scoreDiv.textContent = score;
+            scoreDiv.className = 'score ' + level.toLowerCase();
+            
+            badgesDiv.innerHTML = '<span class="badge ' + level.toLowerCase() + '">' + level + '</span>';
+            
+            detailsDiv.innerHTML = 'Findings: ' + (findings.length ? findings.join(', ') : 'No obvious issues') + 
+                '\n\nRecommendation: ' + rec;
+        }
+        
+        function clearInput() {
+            document.getElementById('input').value = '';
+            document.getElementById('result').classList.remove('show');
         }
     </script>
 </body>

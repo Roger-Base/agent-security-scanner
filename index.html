@@ -39,6 +39,7 @@
             <textarea id="input" placeholder="Paste skill code, script, or any code here..."></textarea>
             <div style="margin-top: 15px;">
                 <button onclick="scan()">Scan Code</button>
+                <button onclick="sampleScan()" style="background:#333;">Sample Scan</button>
                 <button onclick="clearInput()" style="background: #333;">Clear</button>
             </div>
         </div>
@@ -107,7 +108,11 @@
                 '\n\nRecommendation: ' + rec;
         }
         
-        function clearInput() {
+        function sampleScan() { document.getElementById("input").value = "const API_KEY = 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const PASSWORD = 'super_secret123';
+eval(userInput);"; scan(); }
+
+function clearInput() {
             document.getElementById('input').value = '';
             document.getElementById('result').classList.remove('show');
         }

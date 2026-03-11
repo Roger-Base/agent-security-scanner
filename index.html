@@ -6,115 +6,447 @@
     <title>🔒 Agent Security Scanner</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'SF Mono', 'Monaco', monospace; background: #0d0d0d; color: #00ff88; min-height: 100vh; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 { color: #0052ff; font-size: 2.5rem; margin-bottom: 10px; }
-        .tagline { color: #666; margin-bottom: 30px; }
-        .card { background: #1a1a2e; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-        .card h2 { color: #fff; font-size: 1.2rem; margin-bottom: 15px; }
-        textarea { width: 100%; background: #0d0d0d; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; font-family: inherit; min-height: 150px; }
-        button { background: #0052ff; color: #fff; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-right: 10px; }
-        button:hover { background: #0066ff; }
-        .result { background: #0d0d0d; padding: 20px; border-radius: 8px; margin-top: 20px; white-space: pre-wrap; display: none; }
+        body { font-family: 'SF Mono', 'Monaco', 'Consolas', monospace; background: #0d0d0d; color: #e0e0e0; min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #fff; font-size: 2.2rem; margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
+        h1 .badge { font-size: 0.4em; vertical-align: middle; }
+        .tagline { color: #888; margin-bottom: 25px; }
+        .card { background: #16161f; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #2a2a3a; }
+        .card h2 { color: #fff; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        textarea { width: 100%; background: #0a0a0f; border: 1px solid #2a2a3a; color: #e0e0e0; padding: 15px; border-radius: 8px; font-family: inherit; min-height: 180px; font-size: 0.9rem; line-height: 1.5; }
+        textarea:focus { outline: none; border-color: #0052ff; }
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        button { background: #0052ff; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+        button:hover { background: #2266ff; transform: translateY(-1px); }
+        button.secondary { background: #2a2a3a; }
+        button.secondary:hover { background: #3a3a4a; }
+        
+        .result { background: #16161f; padding: 25px; border-radius: 12px; margin-top: 20px; border: 1px solid #2a2a3a; display: none; }
         .result.show { display: block; }
-        .score { font-size: 3rem; font-weight: bold; }
+        
+        .score-row { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+        .score { font-size: 4rem; font-weight: bold; line-height: 1; }
         .score.safe { color: #00ff88; }
         .score.medium { color: #ffaa00; }
         .score.high { color: #ff4444; }
-        .badge { display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; margin-right: 5px; }
-        .badge.safe { background: #00ff8822; color: #00ff88; }
-        .badge.medium { background: #ffaa0022; color: #ffaa00; }
-        .badge.high { background: #ff444422; color: #ff4444; }
-        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; color: #666; font-size: 0.9rem; }
-        a { color: #0052ff; }
+        .score.critical { color: #ff0044; text-shadow: 0 0 20px #ff004488; }
+        
+        .score-label { font-size: 1.2rem; color: #888; }
+        .score-label span { display: block; font-size: 0.8rem; color: #666; margin-top: 4px; }
+        
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 15px 0; }
+        .badge { display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge.safe { background: #00ff8822; color: #00ff88; border: 1px solid #00ff8844; }
+        .badge.medium { background: #ffaa0022; color: #ffaa00; border: 1px solid #ffaa0044; }
+        .badge.high { background: #ff444422; color: #ff4444; border: 1px solid #ff444444; }
+        .badge.critical { background: #ff004422; color: #ff0044; border: 1px solid #ff004444; }
+        
+        .findings { margin-top: 20px; }
+        .findings h3 { color: #fff; font-size: 0.95rem; margin-bottom: 12px; }
+        .finding { background: #0a0a0f; padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid; display: flex; align-items: flex-start; gap: 12px; }
+        .finding.critical { border-left-color: #ff0044; }
+        .finding.high { border-left-color: #ff4444; }
+        .finding.medium { border-left-color: #ffaa00; }
+        .finding.low { border-left-color: #00ff88; }
+        .finding-icon { font-size: 1.1rem; }
+        .finding-text { flex: 1; }
+        .finding-title { color: #fff; font-weight: 500; margin-bottom: 3px; }
+        .finding-desc { color: #888; font-size: 0.8rem; }
+        .finding-score { color: #ff4444; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
+        
+        .recommendation { margin-top: 20px; padding: 15px; border-radius: 8px; background: #0a0a0f; }
+        .recommendation h4 { color: #fff; margin-bottom: 8px; }
+        .recommendation p { color: #aaa; font-size: 0.9rem; line-height: 1.5; }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 15px; }
+        .stat { background: #0a0a0f; padding: 12px; border-radius: 6px; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #fff; }
+        .stat-label { font-size: 0.75rem; color: #666; margin-top: 4px; }
+        
+        .file-drop { border: 2px dashed #2a2a3a; border-radius: 8px; padding: 20px; text-align: center; color: #666; transition: all 0.2s; margin-bottom: 15px; cursor: pointer; }
+        .file-drop:hover { border-color: #0052ff; background: #0052ff11; }
+        .file-drop.dragover { border-color: #0052ff; background: #0052ff11; }
+        
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #2a2a3a; color: #555; font-size: 0.85rem; text-align: center; }
+        .footer a { color: #0052ff; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔒 Agent Security Scanner <span style="font-size:0.5em;background:#0052ff;padding:2px 8px;border-radius:4px;">PAID: x402 Ready</span></h1>
-        <p class="tagline">Scan skills and code for security issues before you install.</p>
+        <h1>🔒 Agent Security Scanner <span class="badge" style="background:#0052ff;font-size:0.3em;padding:3px 8px;">x402 Ready</span></h1>
+        <p class="tagline">Scan skills, code, and configs for security issues before you install.</p>
         
         <div class="card">
-            <h2>Paste code to scan</h2>
-            <textarea id="input" placeholder="Paste skill code, script, or any code here..."></textarea>
-            <div style="margin-top: 15px;">
-                <button onclick="scan()">Scan Code</button>
-                <button onclick="sampleScan()" style="background:#333;">Sample Scan</button>
-                <button onclick="clearInput()" style="background: #333;">Clear</button>
+            <h2>📄 Input</h2>
+            <div class="file-drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                Drop file here or click to upload
+                <input type="file" id="fileInput" style="display:none" accept=".js,.ts,.py,.sh,.json,.md,.html,.yml,.yaml">
+            </div>
+            <textarea id="input" placeholder="Paste skill code, script, or any code here...&#10;&#10;Or drop a file above to scan."></textarea>
+            <div class="btn-group">
+                <button onclick="scan()">🔍 Scan Code</button>
+                <button class="secondary" onclick="sampleScan('secrets')">Sample: Secrets</button>
+                <button class="secondary" onclick="sampleScan('vulns')">Sample: Vulnerabilities</button>
+                <button class="secondary" onclick="sampleScan('safe')">Sample: Safe</button>
+                <button class="secondary" onclick="clearInput()">Clear</button>
             </div>
         </div>
         
         <div id="result" class="result">
-            <div class="score" id="score">-</div>
-            <div id="badges" style="margin: 15px 0;"></div>
-            <div id="details"></div>
+            <div class="score-row">
+                <div class="score" id="score">-</div>
+                <div class="score-label">
+                    Risk Score
+                    <span id="scoreDesc">-</span>
+                </div>
+            </div>
+            
+            <div class="badges" id="badges"></div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="statCritical">0</div>
+                    <div class="stat-label">Critical</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statHigh">0</div>
+                    <div class="stat-label">High</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statMedium">0</div>
+                    <div class="stat-label">Medium</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statLow">0</div>
+                    <div class="stat-label">Low</div>
+                </div>
+            </div>
+            
+            <div class="findings" id="findings"></div>
+            
+            <div class="recommendation" id="recommendation"></div>
         </div>
         
         <div class="footer">
             <p>Built by <a href="https://x.com/roger_base_eth">@roger_base_eth</a> | 
-            <a href="https://github.com/forge-builder/agent-security-scanner-simple">Source</a></p>
+            <a href="https://github.com/forge-builder/agent-security-scanner-simple">Source</a> |
+            Client-side only • No data leaves your browser</p>
         </div>
     </div>
+    
     <script>
+        // Security checks database (60+ checks)
+        const securityChecks = [
+            // Critical - Secrets & Credentials
+            { pattern: /ghp_[A-Za-z0-9]{20,}/, score: 40, severity: 'critical', title: 'GitHub Token', desc: 'GitHub personal access token exposed' },
+            { pattern: /github_pat_[A-Za-z0-9_]{20,}/, score: 40, severity: 'critical', title: 'GitHub PAT', desc: 'GitHub fine-grained PAT exposed' },
+            { pattern: /github_ssh_[A-Za-z0-9_-]+/, score: 35, severity: 'critical', title: 'GitHub SSH Key', desc: 'GitHub SSH key or token exposed' },
+            { pattern: /sk-[A-Za-z0-9]{20,}/, score: 35, severity: 'critical', title: 'OpenAI API Key', desc: 'OpenAI API key exposed' },
+            { pattern: /sk-proj-[A-Za-z0-9_-]{20,}/, score: 35, severity: 'critical', title: 'OpenAI Project Key', desc: 'OpenAI project API key exposed' },
+            { pattern: /xox[baprs]-[A-Za-z0-9-]{20,}/, score: 35, severity: 'critical', title: 'X/Twitter Token', desc: 'X (Twitter) bearer/access token' },
+            { pattern: /AKIA[0-9A-Z]{16}/, score: 40, severity: 'critical', title: 'AWS Access Key', desc: 'AWS access key ID exposed' },
+            { pattern: /(aws_secret_access_key|aws_secret|aws_access_key)['"]?\s*[:=]\s*['"]?[A-Za-z0-9\/+=]{40}/i, score: 40, severity: 'critical', title: 'AWS Secret Key', desc: 'AWS secret access key exposed' },
+            { pattern: /[a-z_]+KEY\s*[=:]\s*['"][a-zA-Z0-9_]{20,}['"]/, score: 35, severity: 'critical', title: 'Stripe Live Key', desc: 'Stripe live secret/key exposed' },
+            { pattern: /sk_test_[A-Za-z0-9]{20,}/, score: 25, severity: 'high', title: 'Stripe Test Key', desc: 'Stripe test key (less risky but still bad)' },
+            { pattern: /rk_live_[A-Za-z0-9]{20,}/, score: 30, severity: 'critical', title: 'Stripe Restricted Key', desc: 'Stripe restricted API key' },
+            { pattern: /sq0csp-[A-Za-z0-9_-]{20,}/, score: 30, severity: 'critical', title: 'Square OAuth Secret', desc: 'Square OAuth client secret' },
+            { pattern: /AIza[0-9A-Za-z_-]{35}/, score: 30, severity: 'critical', title: 'Google API Key', desc: 'Google API key exposed' },
+            { pattern: /ya29\.[0-9A-Za-z_-]{50,}/, score: 35, severity: 'critical', title: 'Google OAuth Token', desc: 'Google OAuth access token' },
+            { pattern: /mongodb(\+srv)?:\/\/[^\s]+:[^\s]+@/, score: 35, severity: 'critical', title: 'MongoDB URI', desc: 'MongoDB connection with credentials' },
+            { pattern: /postgres(ql)?:\/\/[^\s]+:[^\s]+@/, score: 35, severity: 'critical', title: 'PostgreSQL URI', desc: 'PostgreSQL connection with credentials' },
+            { pattern: /mysql:\/\/[^\s]+:[^\s]+@/, score: 35, severity: 'critical', title: 'MySQL URI', desc: 'MySQL connection with credentials' },
+            { pattern: /redis:\/\/[^\s]+:[^\s]+@/, score: 30, severity: 'critical', title: 'Redis URI', desc: 'Redis connection with credentials' },
+            { pattern: /['"](api[_-]?key|apikey|secret|token|password|passwd|pwd|cred)['"]\s*[:=]\s*['"][^'"]+['"]/i, score: 20, severity: 'high', title: 'Hardcoded Credential', desc: 'Potential hardcoded credential' },
+            
+            // Critical - Code Execution
+            { pattern: /eval\s*\(/, score: 25, severity: 'high', title: 'eval() Usage', desc: 'Dynamic code execution - injection risk' },
+            { pattern: /exec\s*\(/, score: 25, severity: 'high', title: 'exec() Usage', desc: 'Shell command execution - injection risk' },
+            { pattern: /Function\s*\(/, score: 20, severity: 'high', title: 'Function Constructor', desc: 'Dynamic function creation - injection risk' },
+            { pattern: /setTimeout\s*\(\s*['"`]/, score: 15, severity: 'medium', title: 'setTimeout with String', desc: 'Indirect code execution via setTimeout' },
+            { pattern: /setInterval\s*\(\s*['"`]/, score: 15, severity: 'medium', title: 'setInterval with String', desc: 'Indirect code execution via setInterval' },
+            
+            // High - Dangerous APIs
+            { pattern: /child_process.*exec\s*\(/, score: 20, severity: 'high', title: 'child_process.exec', desc: 'Shell command execution' },
+            { pattern: /child_process.*spawn\s*\(/, score: 15, severity: 'medium', title: 'child_process.spawn', desc: 'Process spawning - verify input' },
+            { pattern: /\.exec\s*\(/, score: 20, severity: 'high', title: 'SQL Execution', desc: 'Raw SQL execution - SQL injection risk' },
+            { pattern: /\.query\s*\(\s*['"`]/, score: 15, severity: 'medium', title: 'SQL Query with String', desc: 'Query with string interpolation - injection risk' },
+            { pattern: /os\.system\s*\(/, score: 25, severity: 'high', title: 'os.system()', desc: 'Shell command via os.system' },
+            { pattern: /subprocess\.call\s*\(/, score: 20, severity: 'high', title: 'subprocess.call', desc: 'Shell command via subprocess' },
+            { pattern: /subprocess\.run\s*\([^,]+shell\s*=\s*True/, score: 20, severity: 'high', title: 'subprocess with shell=True', desc: 'Shell=True enables injection' },
+            { pattern: /os\.popen\s*\(/, score: 25, severity: 'high', title: 'os.popen', desc: 'Shell command via os.popen' },
+            
+            // High - Path Traversal
+            { pattern: /\.\.\/|[\\/]\.\.[\\/]/, score: 15, severity: 'high', title: 'Path Traversal Pattern', desc: 'Directory traversal pattern detected' },
+            { pattern: /readFile\s*\(.*\.\./, score: 20, severity: 'high', title: 'Path Traversal in Read', desc: 'File read with path traversal' },
+            { pattern: /open\s*\(.*\.\./, score: 20, severity: 'high', title: 'Path Traversal in Open', desc: 'File open with path traversal' },
+            
+            // High - SSRF
+            { pattern: /fetch\s*\([^)]*requestUrl|fetch\s*\([^)]*url[^)]*\)/, score: 15, severity: 'high', title: 'URL Fetch', desc: 'Verify fetched URLs are trusted - SSRF risk' },
+            { pattern: /axios\.get\s*\(|axios\.post\s*\(/, score: 15, severity: 'high', title: 'HTTP Request', desc: 'Verify URLs are trusted - SSRF risk' },
+            { pattern: /http\.get\s*\(|http\.request\s*\(/, score: 15, severity: 'high', title: 'HTTP Request (Node)', desc: 'Verify URLs are trusted - SSRF risk' },
+            { pattern: /requests\.get\s*\(|requests\.post\s*\(/, score: 15, severity: 'high', title: 'HTTP Request (Python)', desc: 'Verify URLs are trusted - SSRF risk' },
+            { pattern: /urllib\.request\s*\(/, score: 15, severity: 'high', title: 'URLLib Request', desc: 'Verify URLs are trusted - SSRF risk' },
+            { pattern: /process\.env\.(URL|URI|HTTP|HTTPS)/i, score: 10, severity: 'medium', title: 'URL from Env', desc: 'Verify env URL sources are trusted' },
+            
+            // High - XXE
+            { pattern: /<!DOCTYPE[^>]*\[|<!ENTITY/, score: 25, severity: 'high', title: 'XXE Pattern', desc: 'XML external entity pattern - XXE vulnerability' },
+            { pattern: /DOMParser.*parseFromString/, score: 10, severity: 'medium', title: 'XML Parsing', desc: 'Verify XML input is trusted' },
+            
+            // High - Deserialization
+            { pattern: /pickle\.loads?\s*\(/, score: 25, severity: 'high', title: 'Pickle Deserialization', desc: 'Unpickle only trusted data - code execution risk' },
+            { pattern: /yaml\.load\s*\([^,)]*Loader\s*=\s*[^,)]*FullLoader/, score: 20, severity: 'high', title: 'Unsafe YAML Load', desc: 'Use safe_load or SafeLoader' },
+            { pattern: /yaml\.load\s*\([^,)]*Loader\s*=\s*[^,)]*UnsafeLoader/, score: 25, severity: 'high', title: 'Unsafe YAML Loader', desc: 'UnsafeLoader allows code execution' },
+            { pattern: /json\.parse\s*\(\s*user/, score: 10, severity: 'medium', title: 'JSON Parse User Input', desc: 'Verify JSON source is trusted' },
+            { pattern: /\.fromJSON\s*\(/, score: 10, severity: 'medium', title: 'JSON Parsing', desc: 'Verify JSON source is trusted' },
+            
+            // Medium - Crypto Weakness
+            { pattern: /md5\s*\(/i, score: 15, severity: 'medium', title: 'MD5 Hash', desc: 'MD5 is cryptographically broken' },
+            { pattern: /sha1\s*\(/i, score: 12, severity: 'medium', title: 'SHA1 Hash', desc: 'SHA1 is deprecated for security' },
+            { pattern: /\.createHash\s*\(\s*['"]md5['"]/i, score: 15, severity: 'medium', title: 'MD5 Hash (Node)', desc: 'MD5 is cryptographically broken' },
+            { pattern: /\.createHash\s*\(\s*['"]sha1['"]/i, score: 12, severity: 'medium', title: 'SHA1 Hash (Node)', desc: 'SHA1 is deprecated for security' },
+            { pattern: /crypto\.createCipher(iv)?\s*\(/, score: 15, severity: 'medium', title: 'Weak Crypto (Node)', desc: 'Use createCipheriv with strong algorithms' },
+            { pattern: /DES\.new\s*\(/, score: 20, severity: 'high', title: 'DES Encryption', desc: 'DES is cryptographically weak' },
+            
+            // Medium - Security Misconfigurations
+            { pattern: /process\.env\.(NODE_ENV|ENV)\s*[=:]\s*['"]?development/i, score: 5, severity: 'low', title: 'Dev Mode', desc: 'Development mode detected' },
+            { pattern: /debug\s*[:=]\s*true/i, score: 5, severity: 'low', title: 'Debug Enabled', desc: 'Debug mode may leak info' },
+            { pattern: /cors\s*[:=]\s*[\*{}true]/i, score: 10, severity: 'medium', title: 'Permissive CORS', desc: 'Wildcard CORS allows any origin' },
+            { pattern: /Access-Control-Allow-Origin:\s*\*/, score: 10, severity: 'medium', title: 'Open CORS', desc: 'Allows cross-origin access' },
+            { pattern: /withCredentials\s*[:=]\s*true/, score: 8, severity: 'medium', title: 'Credentials in CORS', desc: 'Credentials with permissive CORS' },
+            
+            // Medium - Privacy
+            { pattern: /0x[a-fA-F0-9]{40}/, score: 8, severity: 'medium', title: 'Wallet Address', desc: 'Hardcoded wallet address' },
+            { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, score: 5, severity: 'low', title: 'Email Address', desc: 'Email pattern detected' },
+            { pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, score: 5, severity: 'low', title: 'Phone Number', desc: 'Phone number pattern detected' },
+            
+            // Low - Info Disclosure
+            { pattern: /console\.(log|debug|info)\s*\(/, score: 3, severity: 'low', title: 'Console Log', desc: 'Debug logging in production code' },
+            { pattern: /print\s*\(/, score: 2, severity: 'low', title: 'Print Statement', desc: 'Debug print in production code' },
+            { pattern: /\/\/\s*(TODO|FIXME|HACK|XXX|BUG)/i, score: 2, severity: 'low', title: 'Code Comment', desc: 'Development comment left in code' },
+            
+            // Additional Patterns
+            { pattern: /localStorage\.setItem\s*\(/, score: 8, severity: 'medium', title: 'Local Storage', desc: 'Sensitive data in localStorage' },
+            { pattern: /sessionStorage\.setItem\s*\(/, score: 5, severity: 'low', title: 'Session Storage', desc: 'Verify data in sessionStorage' },
+            { pattern: /document\.cookie\s*=/, score: 10, severity: 'medium', title: 'Cookie Set', desc: 'Check cookie security flags' },
+            { pattern: /innerHTML\s*=|html\s*\(/, score: 10, severity: 'medium', title: 'InnerHTML Usage', desc: 'XSS risk - use textContent or sanitize' },
+            { pattern: /\.insertAdjacentHTML\s*\(/, score: 10, severity: 'medium', title: 'insertAdjacentHTML', desc: 'XSS risk - sanitize input' },
+            { pattern: /dangerouslySetInnerHTML/, score: 15, severity: 'high', title: 'React DangerouslySet', desc: 'XSS risk in React' },
+            { pattern: /__dirname|__filename/, score: 3, severity: 'low', title: 'Path Globals', desc: 'File path exposure' },
+            { pattern: /require\s*\(\s*['"]\.\//, score: 2, severity: 'low', title: 'Local Require', desc: 'Local module import - verify source' },
+            { pattern: /import\s+.*\s+from\s+['"]\.\//, score: 2, severity: 'low', title: 'Local Import', desc: 'Local module import - verify source' },
+            
+            // Additional checks for agent/skill security
+            { pattern: /process\.env\.(PRIVATE_KEY|PRIV_KEY|WALLET_PRIVATE)/i, score: 20, severity: 'critical', title: 'Wallet Private Key Env', desc: 'Private key in environment variable' },
+            { pattern: /['"]mnemonic['"]\s*[:=]\s*['"][^'"]+['"]/i, score: 25, severity: 'critical', title: 'Mnemonic Phrase', desc: 'Wallet mnemonic/seed phrase exposed' },
+            { pattern: /\.sendTransaction\s*\(/, score: 10, severity: 'medium', title: 'Transaction Send', desc: 'Verify transaction parameters' },
+            { pattern: /\.sign\s*\(/, score: 10, severity: 'medium', title: 'Message Sign', desc: 'Verify message being signed' },
+        ];
+        
+        // Sample code snippets
+        const samples = {
+            secrets: `// Sample with exposed secrets
+const API_KEY = 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const STRIPE_KEY = 'sk_live_xxxx';
+const AWS_KEY = 'AKIAIOSFODNN7EXAMPLE';
+const DB_URL = 'postgres://user:password@localhost:5432/mydb';
+
+const SECRET = process.env.GITHUB_TOKEN; // also risky
+eval(userInput); // Code injection risk`,
+            vulns: `// Sample with vulnerabilities
+const userInput = req.body.data;
+db.query("SELECT * FROM users WHERE id = " + userInput); // SQL Injection
+const xml = '<!DOCTYPE xxe [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><xxe>&xxe;</xxe>';
+const data = await fetch(userUrl); // SSRF risk
+pickle.load(data); // Deserialization attack
+const hash = crypto.createHash('md5'); // Weak crypto`,
+            safe: `// Safe sample code
+const apiKey = process.env.API_KEY; // From environment
+const query = "SELECT * FROM users WHERE id = $1"; // Parameterized
+const safeUrl = new URL(userInput); // URL validation
+const hash = crypto.createHash('sha256'); // Strong crypto
+import { validateInput } from './validator';
+const safeHtml = DOMPurify.sanitize(userInput); // Sanitized`
+        };
+        
         function scan() {
             const input = document.getElementById('input').value;
             const resultDiv = document.getElementById('result');
-            const scoreDiv = document.getElementById('score');
-            const badgesDiv = document.getElementById('badges');
-            const detailsDiv = document.getElementById('details');
             
             resultDiv.classList.add('show');
             
             if (!input.trim()) {
-                scoreDiv.textContent = '5';
-                scoreDiv.className = 'score safe';
-                badgesDiv.innerHTML = '<span class="badge safe">SAFE</span>';
-                detailsDiv.innerHTML = 'No input provided. Sample: Risk Score 5 = SAFE.\n\nRecommendation: Proceed';
+                showEmptyState();
                 return;
             }
             
-            let score = 0;
-            let findings = [];
+            // Run all security checks
+            const findings = [];
+            let totalScore = 0;
             
-            // Secret patterns
-            if (/ghp_[A-Za-z0-9]{20,}/.test(input)) { score += 40; findings.push('GitHub token found'); }
-            if (/github_pat_[A-Za-z0-9_]{20,}/.test(input)) { score += 40; findings.push('GitHub PAT found'); }
-            if (/sk-[A-Za-z0-9]{20,}/.test(input)) { score += 35; findings.push('OpenAI key found'); }
-            if (/xox[baprs]-[A-Za-z0-9-]+/.test(input)) { score += 35; findings.push('X/Twitter token found'); }
+            for (const check of securityChecks) {
+                if (check.pattern.test(input)) {
+                    findings.push({
+                        ...check,
+                        matched: input.match(check.pattern)[0]
+                    });
+                    totalScore += check.score;
+                }
+            }
             
-            // Dangerous patterns
-            if (/eval\s*\(/.test(input)) { score += 25; findings.push('eval() usage - code injection risk'); }
-            if (/exec\s*\(/.test(input)) { score += 25; findings.push('exec() usage - command injection risk'); }
-            if (/child_process/.test(input)) { score += 20; findings.push('child_process - verify source'); }
+            // Deduplicate findings by title
+            const uniqueFindings = [];
+            const seen = new Set();
+            for (const f of findings) {
+                if (!seen.has(f.title)) {
+                    seen.add(f.title);
+                    uniqueFindings.push(f);
+                }
+            }
             
-            // Wallet patterns
-            if (/0x[a-fA-F0-9]{40}/.test(input)) { score += 10; findings.push('Hardcoded wallet address'); }
+            // Sort by severity then score
+            const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+            uniqueFindings.sort((a, b) => {
+                if (severityOrder[a.severity] !== severityOrder[b.severity]) {
+                    return severityOrder[a.severity] - severityOrder[b.severity];
+                }
+                return b.score - a.score;
+            });
             
-            // Policy issues
-            if (/password\s*=|token\s*=|secret\s*=/.test(input)) { score += 15; findings.push('Potential credential exposure'); }
+            // Count by severity
+            const stats = { critical: 0, high: 0, medium: 0, low: 0 };
+            for (const f of uniqueFindings) {
+                stats[f.severity]++;
+            }
             
-            // Determine level
-            let level = 'SAFE';
-            let rec = 'Proceed';
-            if (score >= 50) { level = 'HIGH'; rec = 'Do not use without review'; }
-            else if (score >= 25) { level = 'MEDIUM'; rec = 'Use with caution'; }
-            
-            scoreDiv.textContent = score;
-            scoreDiv.className = 'score ' + level.toLowerCase();
-            
-            badgesDiv.innerHTML = '<span class="badge ' + level.toLowerCase() + '">' + level + '</span>';
-            
-            detailsDiv.innerHTML = 'Findings: ' + (findings.length ? findings.join(', ') : 'No obvious issues') + 
-                '\n\nRecommendation: ' + rec;
+            // Display results
+            displayResults(totalScore, uniqueFindings, stats);
         }
         
-        function sampleScan() { document.getElementById("input").value = "const API_KEY = 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-const PASSWORD = 'super_secret123';
-eval(userInput);"; scan(); }
-
-function clearInput() {
+        function showEmptyState() {
+            document.getElementById('score').textContent = '0';
+            document.getElementById('score').className = 'score safe';
+            document.getElementById('scoreDesc').textContent = 'No input provided';
+            document.getElementById('badges').innerHTML = '<span class="badge safe">NO INPUT</span>';
+            document.getElementById('statCritical').textContent = '0';
+            document.getElementById('statHigh').textContent = '0';
+            document.getElementById('statMedium').textContent = '0';
+            document.getElementById('statLow').textContent = '0';
+            document.getElementById('findings').innerHTML = '';
+            document.getElementById('recommendation').innerHTML = '<h4>📋 Recommendation</h4><p>Paste code or upload a file to scan for security issues.</p>';
+        }
+        
+        function displayResults(score, findings, stats) {
+            // Determine overall level
+            let level = 'safe';
+            let levelText = 'SAFE';
+            let rec = 'This code appears safe to use.';
+            
+            if (score >= 75 || stats.critical >= 3) {
+                level = 'critical';
+                levelText = 'CRITICAL RISK';
+                rec = '🚫 Do NOT use this code. Critical security issues found that could lead to credential theft, code execution, or data breaches. Review thoroughly or reject.';
+            } else if (score >= 50 || stats.critical >= 1 || stats.high >= 2) {
+                level = 'high';
+                levelText = 'HIGH RISK';
+                rec = '⚠️ Use with extreme caution. High-risk issues found that could expose secrets, enable injection attacks, or compromise systems. Requires careful review.';
+            } else if (score >= 25 || stats.high >= 1 || stats.medium >= 2) {
+                level = 'medium';
+                levelText = 'MEDIUM RISK';
+                rec = '⚡ Review before use. Medium-risk issues found that may lead to security misconfigurations or information disclosure.';
+            }
+            
+            // Update score display
+            const scoreEl = document.getElementById('score');
+            scoreEl.textContent = score;
+            scoreEl.className = 'score ' + level;
+            document.getElementById('scoreDesc').textContent = levelText;
+            
+            // Update badges
+            const badgesEl = document.getElementById('badges');
+            badgesEl.innerHTML = `<span class="badge ${level}">${levelText}</span>`;
+            if (findings.length === 0) {
+                badgesEl.innerHTML += '<span class="badge safe">No Issues Found</span>';
+            }
+            
+            // Update stats
+            document.getElementById('statCritical').textContent = stats.critical;
+            document.getElementById('statHigh').textContent = stats.high;
+            document.getElementById('statMedium').textContent = stats.medium;
+            document.getElementById('statLow').textContent = stats.low;
+            
+            // Update findings list
+            const findingsEl = document.getElementById('findings');
+            if (findings.length > 0) {
+                let html = '<h3>🔍 Findings (' + findings.length + ')</h3>';
+                for (const f of findings) {
+                    const icon = f.severity === 'critical' ? '🔴' : f.severity === 'high' ? '🟠' : f.severity === 'medium' ? '🟡' : '🟢';
+                    html += `
+                        <div class="finding ${f.severity}">
+                            <span class="finding-icon">${icon}</span>
+                            <div class="finding-text">
+                                <div class="finding-title">${f.title}</div>
+                                <div class="finding-desc">${f.desc}</div>
+                            </div>
+                            <span class="finding-score">+${f.score}</span>
+                        </div>
+                    `;
+                }
+                findingsEl.innerHTML = html;
+            } else {
+                findingsEl.innerHTML = '<h3>✅ No issues found</h3><p style="color:#666">This code passed all security checks.</p>';
+            }
+            
+            // Update recommendation
+            document.getElementById('recommendation').innerHTML = '<h4>📋 Recommendation</h4><p>' + rec + '</p>';
+        }
+        
+        function sampleScan(type) {
+            document.getElementById('input').value = samples[type];
+            scan();
+        }
+        
+        function clearInput() {
             document.getElementById('input').value = '';
             document.getElementById('result').classList.remove('show');
+        }
+        
+        // File drag and drop
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'));
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'));
+        });
+        
+        dropZone.addEventListener('drop', e => {
+            const file = e.dataTransfer.files[0];
+            if (file) readFile(file);
+        });
+        
+        fileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) readFile(file);
+        });
+        
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('input').value = e.target.result;
+                scan();
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
